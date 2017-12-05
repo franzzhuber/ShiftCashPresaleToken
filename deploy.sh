@@ -1,0 +1,3 @@
+#! /bin/bash
+
+env ETH_NODE=http://localhost:8545 ETH_CREATOR_ADDRESS=0x0000000000000000000000000000000000000000 node scripts/deploy.js

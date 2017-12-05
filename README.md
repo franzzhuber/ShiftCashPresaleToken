@@ -1,1 +1,1 @@
-# ShiftCashPresaleToken
+# ShiftCash Presale Token
