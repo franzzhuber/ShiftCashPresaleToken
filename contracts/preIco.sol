@@ -6,12 +6,12 @@ contract PresaleToken
     string public constant name = "ShiftCash Presale Token";
     string public constant symbol = "SCASH";
     uint public constant decimals = 18;
-    uint public constant PRICE = 598.5;  // per 1 Ether
+    uint public constant PRICE = 598;  // per 1 Ether
 
     //  price
     // Cap is 4000 ETH
-    // 1 eth = 598.5;  presale SCASH tokens
-    uint public constant TOKEN_SUPPLY_LIMIT = 2394000 * (1 ether / 1 wei);
+    // 1 eth = 598;  presale SCASH tokens
+    uint public constant TOKEN_SUPPLY_LIMIT = 2392000 * (1 ether / 1 wei);
 
     enum State{
         Init,
