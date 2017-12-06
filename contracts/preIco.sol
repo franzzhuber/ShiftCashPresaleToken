@@ -1,8 +1,8 @@
 pragma solidity ^0.4.19;
 
-contract PresaleToken
-{
-/// Fields:
+contract PresaleToken {
+    
+    /// Fields:
     string public constant name = "ShiftCash Presale Token";
     string public constant symbol = "SCASH";
     uint public constant decimals = 18;
@@ -35,21 +35,26 @@ contract PresaleToken
     address public crowdsaleManager = 0;
 
     mapping (address => uint256) private balance;
+    mapping (address => bool) ownerAppended;
+    address[] public owners;
 
-/// Modifiers:
+    /// Modifiers:
     modifier onlyTokenManager()     { require(msg.sender == tokenManager); _; }
     modifier onlyCrowdsaleManager() { require(msg.sender == crowdsaleManager); _; }
     modifier onlyInState(State state){ require(state == currentState); _; }
 
-/// Events:
+    /// Events:
     event LogBurn(address indexed owner, uint value);
     event LogStateSwitch(State newState);
 
-/// Functions:
+    // Triggered when tokens are transferred.
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+
+
+    /// Functions:
     /// @dev Constructor
     /// @param _tokenManager Token manager address.
-    function PresaleToken(address _tokenManager, address _escrow)
-    {
+    function PresaleToken(address _tokenManager, address _escrow) {
         require(_tokenManager != 0);
         require(_escrow != 0);
 
@@ -57,8 +62,7 @@ contract PresaleToken
         escrow = _escrow;
     }
 
-    function buyTokens(address _buyer) public payable onlyInState(State.Running)
-    {
+    function buyTokens(address _buyer) public payable onlyInState(State.Running) {
         require(msg.value != 0);
         uint newTokens = msg.value * PRICE;
 
@@ -66,12 +70,18 @@ contract PresaleToken
 
         balance[_buyer] += newTokens;
         totalSupply += newTokens;
+        
+        if(!ownerAppended[_buyer]) {
+            ownerAppended[_buyer] = true;
+            owners.push(_buyer);
+        }
+        
+        Transfer(msg.sender, _buyer, newTokens);
     }
 
     /// @dev Returns number of tokens owned by given address.
     /// @param _owner Address of token owner.
-    function burnTokens(address _owner) public onlyCrowdsaleManager onlyInState(State.Migrating)
-    {
+    function burnTokens(address _owner) public onlyCrowdsaleManager onlyInState(State.Migrating) {
         uint tokens = balance[_owner];
         require(tokens != 0);
 
@@ -81,8 +91,7 @@ contract PresaleToken
         LogBurn(_owner, tokens);
 
         // Automatically switch phase when migration is done.
-        if(totalSupply == 0)
-        {
+        if(totalSupply == 0) {
             currentState = State.Migrated;
             LogStateSwitch(State.Migrated);
         }
@@ -90,13 +99,11 @@ contract PresaleToken
 
     /// @dev Returns number of tokens owned by given address.
     /// @param _owner Address of token owner.
-    function balanceOf(address _owner) constant returns (uint256)
-    {
+    function balanceOf(address _owner) constant returns (uint256) {
         return balance[_owner];
     }
 
-    function setPresaleState(State _nextState) public onlyTokenManager
-    {
+    function setPresaleState(State _nextState) public onlyTokenManager {
         // Init -> Running
         // Running -> Paused
         // Running -> Migrating
@@ -121,57 +128,54 @@ contract PresaleToken
         LogStateSwitch(_nextState);
     }
 
-    function withdrawEther() public onlyTokenManager
-    {
-        if(this.balance > 0)
-        {
+    function withdrawEther() public onlyTokenManager {
+        if(this.balance > 0) {
             require(escrow.send(this.balance));
         }
     }
 
-/// Setters/getters
-    function setTokenManager(address _mgr) public onlyTokenManager
-    {
+    /// Setters/getters
+    function setTokenManager(address _mgr) public onlyTokenManager {
         tokenManager = _mgr;
     }
 
-    function setCrowdsaleManager(address _mgr) public onlyTokenManager
-    {
+    function setCrowdsaleManager(address _mgr) public onlyTokenManager {
         // You can't change crowdsale contract when migration is in progress.
         require(currentState != State.Migrating);
-
         crowdsaleManager = _mgr;
     }
 
-    function getTokenManager()constant returns(address)
-    {
+    function getTokenManager() constant returns(address) {
         return tokenManager;
     }
 
-    function getCrowdsaleManager()constant returns(address)
-    {
+    function getCrowdsaleManager() constant returns(address) {
         return crowdsaleManager;
     }
 
-    function getCurrentState()constant returns(State)
-    {
+    function getCurrentState() constant returns(State) {
         return currentState;
     }
 
-    function getPrice()constant returns(uint)
-    {
+    function getPrice() constant returns(uint) {
         return PRICE;
     }
 
-    function getTotalSupply()constant returns(uint)
-    {
+    function totalSupply() constant returns (uint256) {
         return totalSupply;
     }
 
+    function getOwner(uint index) constant returns (address, uint256) {
+        return (owners[index], balance[owners[index]]);
+    }
+
+    function getOwnerCount() constant returns (uint) {
+        return owners.length;
+    }
+    
 
     // Default fallback function
-    function() payable
-    {
+    function() payable {
         buyTokens(msg.sender);
     }
 }
