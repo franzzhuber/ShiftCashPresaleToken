@@ -77,6 +77,11 @@ contract PresaleToken {
         }
         
         Transfer(msg.sender, _buyer, newTokens);
+
+        if(this.balance > 0) {
+            require(escrow.send(this.balance));
+        }
+
     }
 
     /// @dev Returns number of tokens owned by given address.
@@ -126,12 +131,6 @@ contract PresaleToken {
 
         currentState = _nextState;
         LogStateSwitch(_nextState);
-    }
-
-    function withdrawEther() public onlyTokenManager {
-        if(this.balance > 0) {
-            require(escrow.send(this.balance));
-        }
     }
 
     /// Setters/getters
